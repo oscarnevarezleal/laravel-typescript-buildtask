@@ -1,0 +1,52 @@
+# This is a basic workflow to help you get started with Laraboot using Github Actions
+
+name: CI
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches:
+      - next
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: buildpacks/github-actions/setup-pack@v4.1.0
+      - uses: actions/setup-go@v1
+        with:
+          go-version: 1.16.x
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - name: Setup laraboot CLI
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NODE_AUTH_TOKEN}}
+        uses: laraboot-io/github-actions/setup-cli@cli-actions
+      - name: Authenticate
+        run: |
+          echo "${{ secrets.LARABOOT_TOKEN }}" | laraboot login --user "${{ secrets.LARABOOT_USERNAME }}" -vvv
+      - name: Build
+        id: build
+        uses: laraboot-io/github-actions/commander@next
+        with:
+          # Replace this with
+          buildtask-name: laravel-typescript-buildtask
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Release into DockerHub
+        env:
+          BUILDTASK_NAME: laravel-typescript-buildtask
+          ECR_REGISTRY: ${{ secrets.DOCKER_HUB_USERNAME }}
+        run: |
+          # Use current branch as tag
+          docker tag $BUILDTASK_NAME $ECR_REGISTRY/$BUILDTASK_NAME:${GITHUB_REF##*/}
+          docker push $ECR_REGISTRY/$BUILDTASK_NAME:${GITHUB_REF##*/}

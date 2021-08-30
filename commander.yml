@@ -1,0 +1,4 @@
+laravel-typescript-buildtask:
+  commands:
+    - composer require based/laravel-typescript
+    - php artisan vendor:publish --provider="Based\TypeScript\TypeScriptServiceProvider" --tag="typescript-config"
