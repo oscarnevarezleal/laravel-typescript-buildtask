@@ -37,6 +37,7 @@ jobs:
           buildtask-name: laravel-typescript-buildtask
       - name: Test
         run: |
+          mkdir test && cd test
           laraboot init --name="app" --description="SmokeGun" --php-version="8.x"
           laraboot task add laravel-typescript-buildtask --imageUri=laravel-typescript-buildtask --format=external
           laraboot build -vvv
